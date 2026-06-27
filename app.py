@@ -32,28 +32,25 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- LOGIN PERSISTENTE ---
-if 'autenticado' not in st.session_state:
+# --- LOGIN MULTI-USUARIO SEGURO ---
+if 'autenticado' not in st.session_state: 
     st.session_state['autenticado'] = False
 
-# Esta función verifica el estado y detiene el script si no hay sesión
-def check_password():
-    if st.session_state['autenticado']:
-        return True
-    
+if not st.session_state['autenticado']:
     st.markdown("## 🔐 Acceso Seguro al Sistema")
     u = st.text_input("Usuario")
     p = st.text_input("Contraseña", type="password")
     
     if st.button("Ingresar"):
-        if u == "daniel.perez" and p == "Zoetis2026*":
+        # Accedemos a los usuarios definidos en los Secrets
+        users = st.secrets.get("usuarios", {})
+        
+        # Verificamos si el usuario existe y coincide la contraseña
+        if u in users and users[u] == p:
             st.session_state['autenticado'] = True
             st.rerun()
         else:
-            st.error("Credenciales incorrectas")
-    return False
-
-# Ejecutamos la verificación
-if not check_password():
+            st.error("Usuario o contraseña incorrectos")
     st.stop()
 
 # --- CARGA Y LIMPIEZA CON API ---
