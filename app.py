@@ -37,7 +37,7 @@ def load_data():
     creds_dict = st.secrets["gcp_service_account"]
     gc = gspread.service_account_from_dict(creds_dict)
     
-    # REEMPLAZA "NOMBRE_DE_TU_GOOGLE_SHEET" POR EL NOMBRE EXACTO EN TU DRIVE
+    # Asegúrate de mantener el nombre exacto de tu Sheet aquí
     sh = gc.open("DB Zoetis Maestra Jun 2026")
     worksheet = sh.sheet1 
     
@@ -48,10 +48,15 @@ def load_data():
     price_cols = [f'Precio {i}' for i in range(1, 31)]
     
     for col in price_cols:
-        # Limpieza: quitamos '$' y ',' (separador de miles)
+        # Limpieza respetando que la COMA es tu separador de miles
+        # 1. Convertimos a string
+        # 2. Quitamos el símbolo '$'
+        # 3. Quitamos las comas (',') que actúan como separador de miles
         df[col] = (df[col].astype(str)
                    .str.replace('$', '', regex=False)
                    .str.replace(',', '', regex=False))
+        
+        # Ahora convertimos a numérico
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
         
     return df, price_cols
