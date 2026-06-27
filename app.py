@@ -31,14 +31,29 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOGIN ---
-if 'autenticado' not in st.session_state: st.session_state['autenticado'] = False
-if not st.session_state['autenticado']:
+# --- LOGIN PERSISTENTE ---
+if 'autenticado' not in st.session_state:
+    st.session_state['autenticado'] = False
+
+# Esta función verifica el estado y detiene el script si no hay sesión
+def check_password():
+    if st.session_state['autenticado']:
+        return True
+    
     st.markdown("## 🔐 Acceso Seguro al Sistema")
-    u, p = st.text_input("Usuario"), st.text_input("Contraseña", type="password")
+    u = st.text_input("Usuario")
+    p = st.text_input("Contraseña", type="password")
+    
     if st.button("Ingresar"):
-        if (u == "daniel.perez" and p == "Zoetis2026*"):
-            st.session_state['autenticado'] = True; st.rerun()
+        if u == "daniel.perez" and p == "Zoetis2026*":
+            st.session_state['autenticado'] = True
+            st.rerun()
+        else:
+            st.error("Credenciales incorrectas")
+    return False
+
+# Ejecutamos la verificación
+if not check_password():
     st.stop()
 
 # --- CARGA Y LIMPIEZA CON API ---
