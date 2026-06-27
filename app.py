@@ -49,7 +49,7 @@ def load_data():
     gc = gspread.service_account_from_dict(creds_dict)
     
     # IMPORTANTE: Usa el ID de tu hoja para evitar errores de nombre
-    sh = gc.open_by_key("DB Zoetis Maestra Jun 2026")
+    sh = gc.open_by_key("1a44CzuSvqhdF90CwhHZbbnJnPmwi7O8bv8r5PibVkOg")
     worksheet = sh.sheet1
     
     # Convertimos a DataFrame
