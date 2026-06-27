@@ -34,7 +34,7 @@ def load_data():
     gc = gspread.service_account_from_dict(creds_dict)
     
     # REEMPLAZA "DB Zoetis Maestra Jun 2026" POR EL NOMBRE EXACTO EN TU DRIVE
-    sh = gc.open("NOMBRE_DE_TU_GOOGLE_SHEET")
+    sh = gc.open("DB Zoetis Maestra Jun 2026")
     worksheet = sh.sheet1 
     
     data = worksheet.get_all_records()
