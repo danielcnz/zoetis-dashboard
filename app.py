@@ -7,16 +7,31 @@ import plotly.express as px
 # Configuración de página
 st.set_page_config(page_title="Zoetis Pricing Intel", layout="wide")
 
-# --- CSS DEFINITIVO (TU DISEÑO ORIGINAL) ---
+# --- CSS DEFINITIVO: TARJETAS GLOW NARANJAS ---
 st.markdown("""
     <style>
-    [data-testid="stMetric"] { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); border: 1px solid #FF8C00; text-align: center; }
-    div[data-testid="stMetricValue"] { color: #FF8C00; font-weight: bold; font-size: 20px; }
-    div[data-testid="stMetricLabel"] { color: #666; font-size: 11px; text-transform: uppercase; }
+    [data-testid="stMetric"] {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        border: 1px solid #FF8C00;
+        text-align: center;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #FF8C00;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #666;
+        font-size: 11px;
+        text-transform: uppercase;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOGIN PERSISTENTE ---
+# --- LOGIN ---
 if 'autenticado' not in st.session_state: st.session_state['autenticado'] = False
 if not st.session_state['autenticado']:
     st.markdown("## 🔐 Acceso Seguro al Sistema")
@@ -26,17 +41,18 @@ if not st.session_state['autenticado']:
             st.session_state['autenticado'] = True; st.rerun()
     st.stop()
 
-# --- CARGA CON API (PROFESIONAL) ---
+# --- CARGA Y LIMPIEZA CON API ---
 @st.cache_data(ttl=60)
 def load_data():
-    # Usamos los secretos configurados en Streamlit Cloud
+    # Conexión vía API de Google
     creds_dict = st.secrets["gcp_service_account"]
     gc = gspread.service_account_from_dict(creds_dict)
     
-    # REEMPLAZA "DB Zoetis Maestra Jun 2026" POR EL NOMBRE EXACTO EN TU DRIVE
-    sh = gc.open("DB Zoetis Maestra Jun 2026")
-    worksheet = sh.sheet1 
+    # IMPORTANTE: Usa el ID de tu hoja para evitar errores de nombre
+    sh = gc.open_by_key("DB Zoetis Maestra Jun 2026")
+    worksheet = sh.sheet1
     
+    # Convertimos a DataFrame
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
     
@@ -44,16 +60,17 @@ def load_data():
     price_cols = [f'Precio {i}' for i in range(1, 31)]
     
     for col in price_cols:
-        # AQUÍ MANTENEMOS LA LIMPIEZA QUE PEDISTE: quitar $ y quitar COMAS
+        # MANTENEMOS TU LÓGICA DE LIMPIEZA ORIGINAL EXACTA
         df[col] = (df[col].astype(str)
                    .str.replace('$', '', regex=False)
-                   .str.replace(',', '', regex=False))
+                   .str.replace('.', '', regex=False))
+        
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     return df, price_cols
 
 df, price_cols = load_data()
 
-# --- DASHBOARD (TU DISEÑO ORIGINAL) ---
+# --- FILTROS ---
 cat_sel = st.sidebar.selectbox("Categoría", ["Todas"] + list(df['Categoría'].unique()))
 prod_lista = df[df['Categoría'] == cat_sel]['Product Name'].unique() if cat_sel != "Todas" else df['Product Name'].unique()
 prod_sel = st.sidebar.selectbox("Producto", ["Todos"] + list(prod_lista))
@@ -65,6 +82,7 @@ if prod_sel != "Todos": df_f = df_f[df_f['Product Name'] == prod_sel]
 st.title(f"📈 Dashboard de Precios: {prod_sel}")
 
 if not df_f.empty:
+    # 6 KPIs
     precios = df_f[price_cols].replace(0, np.nan).stack()
     k1, k2, k3, k4, k5, k6 = st.columns(6)
     k1.metric("Precio Promedio", f"${precios.mean():,.0f}")
@@ -76,6 +94,7 @@ if not df_f.empty:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # GRÁFICO
     if prod_sel != "Todos":
         st.subheader("Dispersión de Precios")
         data_plot = pd.melt(df_f[price_cols].replace(0, np.nan), var_name='Obs', value_name='Precio')
