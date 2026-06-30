@@ -3,36 +3,20 @@ import gspread
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import base64
-import os
 
-# Configuración de página
 st.set_page_config(page_title="Zoetis Pricing Intel", layout="wide")
 
-# --- FUNCIÓN PARA LOGOS ---
-def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
-# --- CSS DEFINITIVO: TARJETAS GLOW NARANJAS Y POSICIÓN LOGOS ---
+# CSS para tarjetas
 st.markdown("""
     <style>
-    [data-testid="stMetric"] {
-        background-color: #ffffff; padding: 20px; border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); border: 1px solid #FF8C00;
-        text-align: center;
-    }
+    [data-testid="stMetric"] { background-color: #ffffff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3); border: 1px solid #FF8C00; text-align: center; }
     div[data-testid="stMetricValue"] { color: #FF8C00; font-weight: bold; font-size: 20px; }
     div[data-testid="stMetricLabel"] { color: #666; font-size: 11px; text-transform: uppercase; }
-    .logo-top { position: absolute; top: 10px; right: 20px; width: 150px; }
-    .logo-bottom { position: absolute; bottom: 20px; right: 20px; width: 120px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- LOGIN MULTI-USUARIO SEGURO ---
-if 'autenticado' not in st.session_state: 
-    st.session_state['autenticado'] = False
+# LOGIN
+if 'autenticado' not in st.session_state: st.session_state['autenticado'] = False
 
 if not st.session_state['autenticado']:
     st.markdown("## 🔐 Acceso Seguro al Sistema")
@@ -44,23 +28,10 @@ if not st.session_state['autenticado']:
             st.session_state['autenticado'] = True
             st.rerun()
         else:
-            st.error("Usuario o contraseña incorrectos")
+            st.error("Credenciales incorrectas")
     st.stop()
 
-# --- SIDEBAR CON LOGOS ---
-# --- SIDEBAR CON LOGOS (SOLO SE CARGAN SI ESTÁ AUTENTICADO) ---
-# if st.session_state['autenticado']:
-#    try:
-#       zoetis_b64 = get_base64_of_bin_file("zoetis.png")
-#        canada_b64 = get_base64_of_bin_file("canada_zoom.png")
-#       st.sidebar.markdown(f"""
-#            <img src="data:image/png;base64,{zoetis_b64}" class="logo-top">
-#            <img src="data:image/png;base64,{canada_b64}" class="logo-bottom">
-#        """, unsafe_allow_html=True)
-#   except Exception as e:
-#        st.sidebar.warning(f"Error cargando logos: {e}")
-
-# --- CARGA Y LIMPIEZA CON API ---
+# CARGA DE DATOS
 @st.cache_data(ttl=60)
 def load_data():
     creds_dict = st.secrets["gcp_service_account"]
@@ -78,9 +49,24 @@ def load_data():
 
 df, price_cols = load_data()
 
-# --- FILTROS Y DASHBOARD ---
+# DASHBOARD
 cat_sel = st.sidebar.selectbox("Categoría", ["Todas"] + list(df['Categoría'].unique()))
 prod_lista = df[df['Categoría'] == cat_sel]['Product Name'].unique() if cat_sel != "Todas" else df['Product Name'].unique()
 prod_sel = st.sidebar.selectbox("Producto", ["Todos"] + list(prod_lista))
 
-# ... (El resto de tu código de lógica de dashboard sigue igual)
+df_f = df.copy()
+if cat_sel != "Todas": df_f = df_f[df_f['Categoría'] == cat_sel]
+if prod_sel != "Todos": df_f = df_f[df_f['Product Name'] == prod_sel]
+
+st.title(f"📈 Dashboard de Precios: {prod_sel}")
+
+if not df_f.empty:
+    precios = df_f[price_cols].replace(0, np.nan).stack()
+    k1, k2, k3, k4, k5, k6 = st.columns(6)
+    k1.metric("Precio Promedio", f"${precios.mean():,.0f}")
+    k2.metric("Mediana Precio", f"${precios.median():,.0f}")
+    k3.metric("P. Mínimo", f"${precios.min():,.0f}")
+    k4.metric("P. Máximo", f"${precios.max():,.0f}")
+    k5.metric("Desv. Est.", f"{precios.std():,.0f}")
+    k6.metric("SKU Seleccionados", len(df_f))
+    st.dataframe(df_f[['Product Name'] + price_cols], use_container_width=True)
