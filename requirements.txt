@@ -1,8 +1,5 @@
 streamlit
-pandas
 gspread
-google-auth
-oauth2client
+pandas
+numpy
 plotly
-requests
-streamlit-screenshot
