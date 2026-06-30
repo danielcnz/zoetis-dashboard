@@ -49,16 +49,16 @@ if not st.session_state['autenticado']:
 
 # --- SIDEBAR CON LOGOS ---
 # --- SIDEBAR CON LOGOS (SOLO SE CARGAN SI ESTÁ AUTENTICADO) ---
-if st.session_state['autenticado']:
-    try:
-        zoetis_b64 = get_base64_of_bin_file("zoetis.png")
-        canada_b64 = get_base64_of_bin_file("canada_zoom.png")
-        st.sidebar.markdown(f"""
-            <img src="data:image/png;base64,{zoetis_b64}" class="logo-top">
-            <img src="data:image/png;base64,{canada_b64}" class="logo-bottom">
-        """, unsafe_allow_html=True)
-    except Exception as e:
-        st.sidebar.warning(f"Error cargando logos: {e}")
+# if st.session_state['autenticado']:
+#    try:
+#       zoetis_b64 = get_base64_of_bin_file("zoetis.png")
+#        canada_b64 = get_base64_of_bin_file("canada_zoom.png")
+#       st.sidebar.markdown(f"""
+#            <img src="data:image/png;base64,{zoetis_b64}" class="logo-top">
+#            <img src="data:image/png;base64,{canada_b64}" class="logo-bottom">
+#        """, unsafe_allow_html=True)
+#   except Exception as e:
+#        st.sidebar.warning(f"Error cargando logos: {e}")
 
 # --- CARGA Y LIMPIEZA CON API ---
 @st.cache_data(ttl=60)
